@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>CRM для Репетиторов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        /* Стили для навигационных вкладок */
+        .tabs {
+            margin-bottom: 20px;
+        }
+        .tabs button {
+            background-color: #f1f1f1;
+            border: none;
+            outline: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-right: 5px;
+        }
+        .tabs button:hover {
+            background-color: #ddd;
+        }
+        .tabs button.active {
+            background-color: #ccc;
+        }
+        /* Стили для секций */
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        form {
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="datetime-local"], textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+            height: 80px;
+        }
+        button[type="submit"] {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        /* Таблица для отображения данных */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #999;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        /* Стили для календаря */
+        .calendar {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+        .calendar-nav button {
+            padding: 5px 10px;
+            background-color: #f1f1f1;
+            border: none;
+            cursor: pointer;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .calendar-day-header {
+            background-color: #f1f1f1;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .calendar-day {
+            min-height: 100px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .calendar-day:hover {
+            background-color: #f9f9f9;
+        }
+        .calendar-day-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .calendar-event {
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196f3;
+            padding: 3px 5px;
+            margin-bottom: 3px;
+            font-size: 12px;
+            border-radius: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .today {
+            background-color: #fff8e1;
+        }
+        .other-month {
+            color: #ccc;
+            background-color: #f9f9f9;
+        }
+
+        /* Стили для модального окна добавления события */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            width: 50%;
+            max-width: 500px;
+            border-radius: 5px;
+        }
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<h1>CRM для Репетиторов</h1>
+
+<!-- Навигационные вкладки -->
+<div class="tabs">
+    <button class="tab-button active" data-target="studentsSection">Ученики</button>
+    <button class="tab-button" data-target="scheduleSection">Расписание</button>
+    <button class="tab-button" data-target="calendarSection">Календарь</button>
+</div>
+
+<!-- Секция для учеников -->
+<div id="studentsSection" class="section active">
+    <h2>Управление учениками</h2>
+    <form id="studentForm">
+        <div class="form-group">
+            <label for="firstName">Имя</label>
+            <input type="text" id="firstName" name="firstName" placeholder="Введите имя" required>
+        </div>
+        <div class="form-group">
+            <label for="lastName">Фамилия</label>
+            <input type="text" id="lastName" name="lastName" placeholder="Введите фамилию" required>
+        </div>
+        <div class="form-group">
+            <label for="class">Класс</label>
+            <input type="text" id="class" name="class" placeholder="Введите класс" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Описание ученика</label>
+            <textarea id="description" name="description" placeholder="Введите описание"></textarea>
+        </div>
+        <button type="submit">Добавить ученика</button>
+    </form>
+    <!-- Список учеников -->
+    <h3>Список учеников</h3>
+    <table id="studentsTable">
+        <thead>
+        <tr>
+            <th>Имя</th>
+            <th>Фамилия</th>
+            <th>Класс</th>
+            <th>Описание</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Строки будут добавляться динамически -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Секция для расписания -->
+<div id="scheduleSection" class="section">
+    <h2>Расписание занятий</h2>
+    <form id="scheduleForm">
+        <div class="form-group">
+            <label for="lessonTitle">Название занятия</label>
+            <input type="text" id="lessonTitle" name="lessonTitle" placeholder="Введите название занятия" required>
+        </div>
+        <div class="form-group">
+            <label for="lessonDateTime">Дата и время</label>
+            <input type="datetime-local" id="lessonDateTime" name="lessonDateTime" required>
+        </div>
+        <div class="form-group">
+            <label for="studentSelect">Ученик</label>
+            <select id="studentSelect" name="studentSelect" required>
+                <option value="">Выберите ученика</option>
+                <!-- Опции будут добавлены динамически -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="lessonNotes">Заметки</label>
+            <textarea id="lessonNotes" name="lessonNotes" placeholder="Введите заметки о занятии"></textarea>
+        </div>
+        <button type="submit">Добавить занятие</button>
+    </form>
+    <h3>Запланированные занятия</h3>
+    <table id="scheduleTable">
+        <thead>
+        <tr>
+            <th>Название</th>
+            <th>Дата и время</th>
+            <th>Ученик</th>
+            <th>Заметки</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Строки будут добавляться динамически -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Новая секция для календаря -->
+<div id="calendarSection" class="section">
+    <h2>Календарь занятий</h2>
+
+    <div class="calendar">
+        <div class="calendar-header">
+            <h3 id="currentMonthYear">Месяц Год</h3>
+            <div class="calendar-nav">
+                <button id="prevMonth">⟨ Предыдущий</button>
+                <button id="today">Сегодня</button>
+                <button id="nextMonth">Следующий ⟩</button>
+            </div>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- Заголовки дней недели -->
+            <div class="calendar-day-header">ПН</div>
+            <div class="calendar-day-header">ВТ</div>
+            <div class="calendar-day-header">СР</div>
+            <div class="calendar-day-header">ЧТ</div>
+            <div class="calendar-day-header">ПТ</div>
+            <div class="calendar-day-header">СБ</div>
+            <div class="calendar-day-header">ВС</div>
+
+            <!-- Дни календаря будут добавляться динамически -->
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для добавления события в календаре -->
+<div id="eventModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Добавить занятие</h3>
+        <form id="calendarEventForm">
+            <input type="hidden" id="eventDate" name="eventDate">
+            <div class="form-group">
+                <label for="eventTitle">Название занятия</label>
+                <input type="text" id="eventTitle" name="eventTitle" placeholder="Введите название занятия" required>
+            </div>
+            <div class="form-group">
+                <label for="eventTime">Время</label>
+                <input type="time" id="eventTime" name="eventTime" required>
+            </div>
+            <div class="form-group">
+                <label for="eventStudent">Ученик</label>
+                <select id="eventStudent" name="eventStudent" required>
+                    <option value="">Выберите ученика</option>
+                    <!-- Опции будут добавлены динамически -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="eventNotes">Заметки</label>
+                <textarea id="eventNotes" name="eventNotes" placeholder="Введите заметки о занятии"></textarea>
+            </div>
+            <button type="submit">Сохранить</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Функция для переключения вкладок
+    function setupTabs() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Удаляем класс active у всех кнопок и секций
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+
+                // Добавляем класс active к нажатой кнопке
+                button.classList.add('active');
+
+                // Показываем соответствующую секцию
+                const targetId = button.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+    }
+
+    // Хранилище данных для учеников, занятий и календаря
+    const studentsData = [];
+    const schedulesData = [];
+    const calendarEvents = {};
+
+    // Функция для добавления ученика
+    function setupStudentForm() {
+        const studentForm = document.getElementById('studentForm');
+        const studentsTable = document.getElementById('studentsTable').querySelector('tbody');
+
+        studentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const studentClass = document.getElementById('class').value;
+            const description = document.getElementById('description').value;
+
+            // Добавляем ученика в массив
+            const student = {
+                id: Date.now(), // Используем текущее время как уникальный ID
+                firstName,
+                lastName,
+                class: studentClass,
+                description
+            };
+            studentsData.push(student);
+
+            // Добавляем строку в таблицу
+            const row = studentsTable.insertRow();
+            row.insertCell(0).textContent = firstName;
+            row.insertCell(1).textContent = lastName;
+            row.insertCell(2).textContent = studentClass;
+            row.insertCell(3).textContent = description;
+
+            // Обновляем выпадающие списки для выбора ученика
+            updateStudentSelects();
+
+            // Очищаем форму
+            studentForm.reset();
+        });
+    }
+
+    // Функция для добавления занятия в расписание
+    function setupScheduleForm() {
+        const scheduleForm = document.getElementById('scheduleForm');
+        const scheduleTable = document.getElementById('scheduleTable').querySelector('tbody');
+
+        scheduleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('lessonTitle').value;
+            const dateTime = document.getElementById('lessonDateTime').value;
+            const studentId = document.getElementById('studentSelect').value;
+            const notes = document.getElementById('lessonNotes').value;
+
+            // Находим выбранного ученика
+            const student = studentsData.find(s => s.id.toString() === studentId);
+            const studentName = student ? `${student.firstName} ${student.lastName}` : 'Ученик не выбран';
+
+            // Добавляем занятие в массив
+            const lesson = {
+                id: Date.now(),
+                title,
+                dateTime,
+                studentId,
+                studentName,
+                notes
+            };
+            schedulesData.push(lesson);
+
+            // Добавляем строку в таблицу
+            const row = scheduleTable.insertRow();
+            row.insertCell(0).textContent = title;
+            row.insertCell(1).textContent = formatDateTime(dateTime);
+            row.insertCell(2).textContent = studentName;
+            row.insertCell(3).textContent = notes;
+
+            // Добавляем занятие в календарь
+            addEventToCalendar(lesson);
+
+            // Обновляем календарь
+            renderCalendar(currentCalendarDate);
+
+            // Очищаем форму
+            scheduleForm.reset();
+        });
+    }
+
+    // Форматирование даты и времени для отображения
+    function formatDateTime(dateTimeStr) {
+        const dateTime = new Date(dateTimeStr);
+        return dateTime.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Обновление выпадающих списков учеников
+    function updateStudentSelects() {
+        const studentSelects = [
+            document.getElementById('studentSelect'),
+            document.getElementById('eventStudent')
+        ];
+
+        studentSelects.forEach(select => {
+            // Сохраняем текущее выбранное значение
+            const selectedValue = select.value;
+
+            // Очищаем список, оставляя только первый пустой элемент
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+
+            // Добавляем учеников в список
+            studentsData.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = `${student.firstName} ${student.lastName}`;
+                select.appendChild(option);
+            });
+
+            // Восстанавливаем выбранное значение, если оно существует
+            if (selectedValue) {
+                select.value = selectedValue;
+            }
+        });
+    }
+
+    // Переменная для хранения текущей даты в календаре
+    let currentCalendarDate = new Date();
+
+    // Функция инициализации календаря
+    function setupCalendar() {
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const todayBtn = document.getElementById('today');
+
+        // Обработчики для кнопок навигации по календарю
+        prevMonthBtn.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar(currentCalendarDate);
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar(currentCalendarDate);
+        });
+
+        todayBtn.addEventListener('click', () => {
+            currentCalendarDate = new Date();
+            renderCalendar(currentCalendarDate);
+        });
+
+        // Инициализация модального окна
+        setupEventModal();
+
+        // Первичная отрисовка календаря
+        renderCalendar(currentCalendarDate);
+    }
+
+    // Отрисовка календаря
+    function renderCalendar(date) {
+        const calendarGrid = document.getElementById('calendarGrid');
+        const monthYearHeader = document.getElementById('currentMonthYear');
+
+        // Устанавливаем заголовок с текущим месяцем и годом
+        const monthName = date.toLocaleString('ru-RU', { month: 'long' });
+        const year = date.getFullYear();
+        monthYearHeader.textContent = `${monthName} ${year}`;
+
+        // Очищаем сетку от старых дней (оставляем только заголовки)
+        while (calendarGrid.children.length > 7) {
+            calendarGrid.removeChild(calendarGrid.lastChild);
+        }
+
+        // Получаем первый день месяца
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        // Получаем индекс дня недели (0 - воскресенье, ..., 6 - суббота)
+        let startDayIndex = firstDay.getDay();
+        // Преобразуем к формату, где 0 - понедельник, ..., 6 - воскресенье
+        startDayIndex = startDayIndex === 0 ? 6 : startDayIndex - 1;
+
+        // Получаем последний день предыдущего месяца
+        const lastDayPrevMonth = new Date(date.getFullYear(), date.getMonth(), 0).getDate();
+
+        // Получаем количество дней в текущем месяце
+        const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+
+        // Текущая дата для выделения сегодняшнего дня
+        const today = new Date();
+
+        // Добавляем дни предыдущего месяца
+        for (let i = 0; i < startDayIndex; i++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'calendar-day other-month';
+
+            const dayNumber = lastDayPrevMonth - startDayIndex + i + 1;
+            dayDiv.innerHTML = `<div class="calendar-day-number">${dayNumber}</div>`;
+
+            const prevMonthDate = new Date(date.getFullYear(), date.getMonth() - 1, dayNumber);
+            addEventsToDay(dayDiv, formatDateKey(prevMonthDate));
+            
+            calendarGrid.appendChild(dayDiv);
+        }
+
+        // Добавляем дни текущего месяца
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'calendar-day';
+            
+            // Проверяем, является ли день сегодняшним
+            if (today.getDate() === i && today.getMonth() === date.getMonth() && today.getFullYear() === date.getFullYear()) {
+                dayDiv.classList.add('today');
+            }
+
+            dayDiv.innerHTML = `<div class="calendar-day-number">${i}</div>`;
+            
+            const currentDate = new Date(date.getFullYear(), date.getMonth(), i);
+            addEventsToDay(dayDiv, formatDateKey(currentDate));
+            
+            // Добавляем обработчик для открытия модального окна
+            dayDiv.addEventListener('click', () => {
+                openEventModal(currentDate);
+            });
+            
+            calendarGrid.appendChild(dayDiv);
+        }
+
+        // Добавляем дни следующего месяца
+        const totalCells = 42; // 6 рядов по 7 дней
+        const remainingCells = totalCells - (startDayIndex + daysInMonth);
+        
+        for (let i = 1; i <= remainingCells; i++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'calendar-day other-month';
+            dayDiv.innerHTML = `<div class="calendar-day-number">${i}</div>`;
+            
+            const nextMonthDate = new Date(date.getFullYear(), date.getMonth() + 1, i);
+            addEventsToDay(dayDiv, formatDateKey(nextMonthDate));
+            
+            calendarGrid.appendChild(dayDiv);
+        }
+    }
+
+    // Форматирование даты для ключа в объекте событий календаря
+    function formatDateKey(date) {
+        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    }
+
+    // Добавление событий на день календаря
+    function addEventsToDay(dayDiv, dateKey) {
+        if (calendarEvents[dateKey]) {
+            calendarEvents[dateKey].forEach(event => {
+                const eventEl = document.createElement('div');
+                eventEl.className = 'calendar-event';
+                eventEl.title = `${event.title} - ${event.studentName} - ${event.time}`;
+                eventEl.textContent = `${event.time} ${event.title}`;
+                dayDiv.appendChild(eventEl);
+            });
+        }
+    }
+
+    // Установка модального окна для событий
+    function setupEventModal() {
+        const modal = document.getElementById('eventModal');
+        const closeBtn = modal.querySelector('.close');
+        const form = document.getElementById('calendarEventForm');
+
+        // Закрытие модального окна при клике на крестик
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        // Закрытие модального окна при клике вне его области
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Обработка формы добавления события
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const dateStr = document.getElementById('eventDate').value;
+            const title = document.getElementById('eventTitle').value;
+            const time = document.getElementById('eventTime').value;
+            const studentId = document.getElementById('eventStudent').value;
+            const notes = document.getElementById('eventNotes').value;
+            
+            // Находим выбранного ученика
+            const student = studentsData.find(s => s.id.toString() === studentId);
+            const studentName = student ? `${student.firstName} ${student.lastName}` : 'Ученик не выбран';
+            
+            // Создаем событие
+            const event = {
+                id: Date.now(),
+                title,
+                time,
+                studentId,
+                studentName,
+                notes,
+                date: dateStr
+            };
+            
+            // Добавляем событие в календарь
+            addEventToCalendar(event);
+            
+            // Обновляем календарь
+            renderCalendar(currentCalendarDate);
+            
+            // Закрываем модальное окно
+            modal.style.display = 'none';
+            
+            // Очищаем форму
+            form.reset();
+        });
+    }
+
+    // Открытие модального окна для добавления события
+    function openEventModal(date) {
+        const modal = document.getElementById('eventModal');
+        const dateInput = document.getElementById('eventDate');
+        
+        // Форматируем дату для input
+        const formattedDate = formatDateKey(date);
+        dateInput.value = formattedDate;
+        
+        // Показываем модальное окно
+        modal.style.display = 'block';
+    }
+
+    // Добавление занятия в календарь
+    function addEventToCalendar(event) {
+        let dateKey;
+        
+        if (event.dateTime) {
+            // Если это занятие из расписания занятий
+            const dateObj = new Date(event.dateTime);
+            dateKey = formatDateKey(dateObj);
+            
+            // Форматирование времени
+            const timeStr = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            
+            // Создаем событие для календаря
+            const calEvent = {
+                id: event.id,
+                title: event.title,
+                time: timeStr,
+                studentId: event.studentId,
+                studentName: event.studentName,
+                notes: event.notes
+            };
+            
+            // Добавляем событие в календарь
+            if (!calendarEvents[dateKey]) {
+                calendarEvents[dateKey] = [];
+            }
+            calendarEvents[dateKey].push(calEvent);
+        } else if (event.date && event.time) {
+            // Если это событие из календаря
+            dateKey = event.date;
+            
+            // Добавляем событие в календарь
+            if (!calendarEvents[dateKey]) {
+                calendarEvents[dateKey] = [];
+            }
+            calendarEvents[dateKey].push(event);
+        }
+    }
+
+    // Сохранение данных в localStorage
+    function saveToLocalStorage() {
+        localStorage.setItem('studentsData', JSON.stringify(studentsData));
+        localStorage.setItem('schedulesData', JSON.stringify(schedulesData));
+        localStorage.setItem('calendarEvents', JSON.stringify(calendarEvents));
+        localStorage.setItem('paymentsData', JSON.stringify(paymentsData));
+    }
+
+    // Загрузка данных из localStorage
+    function loadFromLocalStorage() {
+        const students = localStorage.getItem('studentsData');
+        const schedules = localStorage.getItem('schedulesData');
+        const events = localStorage.getItem('calendarEvents');
+        const payments = localStorage.getItem('paymentsData');
+
+        if (students) {
+            studentsData.push(...JSON.parse(students));
+            updateStudentTable();
+        }
+        
+        if (schedules) {
+            schedulesData.push(...JSON.parse(schedules));
+            updateScheduleTable();
+        }
+        
+        if (events) {
+            Object.assign(calendarEvents, JSON.parse(events));
+            renderCalendar(currentCalendarDate);
+        }
+        
+        if (payments) {
+            paymentsData.push(...JSON.parse(payments));
+            updatePaymentTable();
+        }
+        
+        updateStudentSelects();
+    }
+
+    // Обновление таблицы учеников
+    function updateStudentTable() {
+        const studentsTable = document.getElementById('studentsTable').querySelector('tbody');
+        studentsTable.innerHTML = '';
+
+        studentsData.forEach(student => {
+            const row = studentsTable.insertRow();
+            row.setAttribute('data-id', student.id);
+            row.insertCell(0).textContent = student.firstName;
+            row.insertCell(1).textContent = student.lastName;
+            row.insertCell(2).textContent = student.class;
+            row.insertCell(3).textContent = student.description;
+            
+            const actionsCell = row.insertCell(4);
+            
+            // Кнопка редактирования
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Редактировать';
+            editBtn.addEventListener('click', () => editStudent(student.id));
+            actionsCell.appendChild(editBtn);
+            
+            // Кнопка удаления
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Удалить';
+            deleteBtn.addEventListener('click', () => deleteStudent(student.id));
+            actionsCell.appendChild(deleteBtn);
+        });
+    }
+
+    // Редактирование ученика
+    function editStudent(id) {
+        const student = studentsData.find(s => s.id === id);
+        if (!student) return;
+
+        // Заполняем форму данными ученика
+        document.getElementById('firstName').value = student.firstName;
+        document.getElementById('lastName').value = student.lastName;
+        document.getElementById('class').value = student.class;
+        document.getElementById('description').value = student.description;
+
+        // Меняем кнопку формы на "Обновить"
+        const submitBtn = document.querySelector('#studentForm button[type="submit"]');
+        submitBtn.textContent = 'Обновить ученика';
+        
+        // Добавляем скрытое поле с ID для отслеживания
+        let idInput = document.getElementById('studentId');
+        if (!idInput) {
+            idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.id = 'studentId';
+            document.getElementById('studentForm').appendChild(idInput);
+        }
+        idInput.value = id;
+    }
+
+    // Удаление ученика
+    function deleteStudent(id) {
+        if (!confirm('Вы уверены, что хотите удалить этого ученика?')) return;
+
+        // Удаляем из данных
+        const index = studentsData.findIndex(s => s.id === id);
+        if (index !== -1) {
+            studentsData.splice(index, 1);
+            
+            // Удаляем связанные занятия
+            const relatedLessonIds = [];
+            schedulesData.forEach((lesson, idx) => {
+                if (parseInt(lesson.studentId) === id) {
+                    relatedLessonIds.push(idx);
+                }
+            });
+            // Удаляем с конца, чтобы не нарушить индексацию
+            for (let i = relatedLessonIds.length - 1; i >= 0; i--) {
+                schedulesData.splice(relatedLessonIds[i], 1);
+            }
+            
+            // Обновляем все таблицы и селекты
+            updateStudentTable();
+            updateScheduleTable();
+            updateStudentSelects();
+            renderCalendar(currentCalendarDate);
+            saveToLocalStorage();
+        }
+    }
+
+    // Обновление таблицы расписания
+    function updateScheduleTable() {
+        const scheduleTable = document.getElementById('scheduleTable').querySelector('tbody');
+        scheduleTable.innerHTML = '';
+
+        schedulesData.forEach(lesson => {
+            const row = scheduleTable.insertRow();
+            row.setAttribute('data-id', lesson.id);
+            row.insertCell(0).textContent = lesson.title;
+            row.insertCell(1).textContent = formatDateTime(lesson.dateTime);
+            row.insertCell(2).textContent = lesson.studentName;
+            row.insertCell(3).textContent = lesson.notes;
+            
+            const actionsCell = row.insertCell(4);
+            
+            // Кнопка редактирования
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Редактировать';
+            editBtn.addEventListener('click', () => editLesson(lesson.id));
+            actionsCell.appendChild(editBtn);
+            
+            // Кнопка удаления
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Удалить';
+            deleteBtn.addEventListener('click', () => deleteLesson(lesson.id));
+            actionsCell.appendChild(deleteBtn);
+        });
+    }
+
+    // Редактирование занятия
+    function editLesson(id) {
+        const lesson = schedulesData.find(l => l.id === id);
+        if (!lesson) return;
+
+        // Заполняем форму данными занятия
+        document.getElementById('lessonTitle').value = lesson.title;
+        document.getElementById('lessonDateTime').value = lesson.dateTime;
+        document.getElementById('studentSelect').value = lesson.studentId;
+        document.getElementById('lessonNotes').value = lesson.notes;
+
+        // Меняем кнопку формы на "Обновить"
+        const submitBtn = document.querySelector('#scheduleForm button[type="submit"]');
+        submitBtn.textContent = 'Обновить занятие';
+        
+        // Добавляем скрытое поле с ID для отслеживания
+        let idInput = document.getElementById('lessonId');
+        if (!idInput) {
+            idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.id = 'lessonId';
+            document.getElementById('scheduleForm').appendChild(idInput);
+        }
+        idInput.value = id;
+    }
+
+    // Удаление занятия
+    function deleteLesson(id) {
+        if (!confirm('Вы уверены, что хотите удалить это занятие?')) return;
+
+        // Удаляем из данных
+        const index = schedulesData.findIndex(l => l.id === id);
+        if (index !== -1) {
+            // Удаляем занятие из календаря
+            const lesson = schedulesData[index];
+            const dateObj = new Date(lesson.dateTime);
+            const dateKey = formatDateKey(dateObj);
+            
+            if (calendarEvents[dateKey]) {
+                const eventIndex = calendarEvents[dateKey].findIndex(e => e.id === id);
+                if (eventIndex !== -1) {
+                    calendarEvents[dateKey].splice(eventIndex, 1);
+                    if (calendarEvents[dateKey].length === 0) {
+                        delete calendarEvents[dateKey];
+                    }
+                }
+            }
+            
+            // Удаляем из расписания
+            schedulesData.splice(index, 1);
+            
+            // Обновляем интерфейс
+            updateScheduleTable();
+            renderCalendar(currentCalendarDate);
+            saveToLocalStorage();
+        }
+    }
+
+    // Массив для хранения данных о платежах
+    const paymentsData = [];
+
+    // Настройка формы платежей
+    function setupPaymentForm() {
+        const paymentForm = document.getElementById('paymentForm');
+        
+        paymentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentId = document.getElementById('paymentStudent').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const date = document.getElementById('paymentDate').value;
+            const description = document.getElementById('paymentDescription').value;
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            
+            // Находим выбранного ученика
+            const student = studentsData.find(s => s.id.toString() === studentId);
+            const studentName = student ? `${student.firstName} ${student.lastName}` : 'Ученик не выбран';
+            
+            // Проверяем, редактируем или добавляем
+            const paymentIdInput = document.getElementById('paymentId');
+            
+            if (paymentIdInput && paymentIdInput.value) {
+                // Режим редактирования
+                const paymentId = parseInt(paymentIdInput.value);
+                const index = paymentsData.findIndex(p => p.id === paymentId);
+                
+                if (index !== -1) {
+                    paymentsData[index] = {
+                        id: paymentId,
+                        studentId,
+                        studentName,
+                        amount,
+                        date,
+                        description,
+                        paymentMethod
+                    };
+                    
+                    // Сбрасываем режим редактирования
+                    paymentIdInput.value = '';
+                    document.querySelector('#paymentForm button[type="submit"]').textContent = 'Добавить платеж';
+                }
+            } else {
+                // Режим добавления
+                const payment = {
+                    id: Date.now(),
+                    studentId,
+                    studentName,
+                    amount,
+                    date,
+                    description,
+                    paymentMethod
+                };
+                
+                paymentsData.push(payment);
+            }
+            
+            // Обновляем таблицу платежей
+            updatePaymentTable();
+            
+            // Сохраняем в локальное хранилище
+            saveToLocalStorage();
+            
+            // Очищаем форму
+            paymentForm.reset();
+        });
+    }
+
+    // Обновление таблицы платежей
+    function updatePaymentTable() {
+        const paymentTable = document.getElementById('paymentsTable').querySelector('tbody');
+        paymentTable.innerHTML = '';
+        
+        // Фильтрация платежей
+        const studentFilter = document.getElementById('paymentStudentFilter').value;
+        let filteredPayments = [...paymentsData];
+        
+        if (studentFilter) {
+            filteredPayments = filteredPayments.filter(p => p.studentId.toString() === studentFilter);
+        }
+        
+        // Суммируем платежи для отображения общей суммы
+        const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+        document.getElementById('totalPaymentAmount').textContent = `Итого: ${totalAmount.toFixed(2)} ₽`;
+        
+        // Заполняем таблицу
+        filteredPayments.forEach(payment => {
+            const row = paymentTable.insertRow();
+            row.setAttribute('data-id', payment.id);
+            
+            const dateCell = row.insertCell(0);
+            const formattedDate = new Date(payment.date).toLocaleDateString('ru-RU');
+            dateCell.textContent = formattedDate;
+            
+            row.insertCell(1).textContent = payment.studentName;
+            
+            const amountCell = row.insertCell(2);
+            amountCell.textContent = `${payment.amount.toFixed(2)} ₽`;
+            
+            row.insertCell(3).textContent = payment.description;
+            row.insertCell(4).textContent = payment.paymentMethod;
+            
+            const actionsCell = row.insertCell(5);
+            
+            // Кнопка редактирования
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Редактировать';
+            editBtn.addEventListener('click', () => editPayment(payment.id));
+            actionsCell.appendChild(editBtn);
+            
+            // Кнопка удаления
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Удалить';
+            deleteBtn.addEventListener('click', () => deletePayment(payment.id));
+            actionsCell.appendChild(deleteBtn);
+        });
+    }
+
+    // Редактирование платежа
+    function editPayment(id) {
+        const payment = paymentsData.find(p => p.id === id);
+        if (!payment) return;
+        
+        // Заполняем форму данными платежа
+        document.getElementById('paymentStudent').value = payment.studentId;
+        document.getElementById('paymentAmount').value = payment.amount;
+        document.getElementById('paymentDate').value = payment.date;
+        document.getElementById('paymentDescription').value = payment.description;
+        document.getElementById('paymentMethod').value = payment.paymentMethod;
+        
+        // Меняем кнопку формы на "Обновить"
+        const submitBtn = document.querySelector('#paymentForm button[type="submit"]');
+        submitBtn.textContent = 'Обновить платеж';
+        
+        // Добавляем скрытое поле с ID для отслеживания
+        let idInput = document.getElementById('paymentId');
+        if (!idInput) {
+            idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.id = 'paymentId';
+            document.getElementById('paymentForm').appendChild(idInput);
+        }
+        idInput.value = id;
+    }
+
+    // Удаление платежа
+    function deletePayment(id) {
+        if (!confirm('Вы уверены, что хотите удалить этот платеж?')) return;
+        
+        // Удаляем из данных
+        const index = paymentsData.findIndex(p => p.id === id);
+        if (index !== -1) {
+            paymentsData.splice(index, 1);
+            
+            // Обновляем интерфейс
+            updatePaymentTable();
+            saveToLocalStorage();
+        }
+    }
+
+    // Настройка поиска учеников
+    function setupStudentSearch() {
+        const searchInput = document.getElementById('studentSearch');
+        
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const rows = document.querySelectorAll('#studentsTable tbody tr');
+            
+            rows.forEach(row => {
+                const firstName = row.cells[0].textContent.toLowerCase();
+                const lastName = row.cells[1].textContent.toLowerCase();
+                const cls = row.cells[2].textContent.toLowerCase();
+                
+                if (firstName.includes(searchTerm) || lastName.includes(searchTerm) || cls.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Настройка фильтрации платежей
+    function setupPaymentFilter() {
+        const filterSelect = document.getElementById('paymentStudentFilter');
+        
+        filterSelect.addEventListener('change', () => {
+            updatePaymentTable();
+        });
+    }
+
+    // Инициализация всех компонентов при загрузке страницы
+    document.addEventListener('DOMContentLoaded', () => {
+        // Добавляем вкладку "Платежи" в навигацию
+        const tabs = document.querySelector('.tabs');
+        const paymentTab = document.createElement('button');
+        paymentTab.className = 'tab-button';
+        paymentTab.setAttribute('data-target', 'paymentsSection');
+        paymentTab.textContent = 'Платежи';
+        tabs.appendChild(paymentTab);
+        
+        // Добавляем секцию платежей
+        const paymentsSection = document.createElement('div');
+        paymentsSection.id = 'paymentsSection';
+        paymentsSection.className = 'section';
+        paymentsSection.innerHTML = `
+            <h2>Финансовый учет</h2>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="paymentStudent">Ученик</label>
+                    <select id="paymentStudent" name="paymentStudent" required>
+                        <option value="">Выберите ученика</option>
+                        <!-- Опции будут добавлены динамически -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="paymentAmount">Сумма (₽)</label>
+                    <input type="number" id="paymentAmount" name="paymentAmount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentDate">Дата платежа</label>
+                    <input type="date" id="paymentDate" name="paymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentMethod">Способ оплаты</label>
+                    <select id="paymentMethod" name="paymentMethod" required>
+                        <option value="Наличные">Наличные</option>
+                        <option value="Перевод">Банковский перевод</option>
+                        <option value="Карта">Банковская карта</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="paymentDescription">Описание</label>
+                    <textarea id="paymentDescription" name="paymentDescription" placeholder="Введите описание платежа"></textarea>
+                </div>
+                <button type="submit">Добавить платеж</button>
+            </form>
+            <h3>История платежей</h3>
+            <div class="filter-controls">
+                <label for="paymentStudentFilter">Фильтр по ученику:</label>
+                <select id="paymentStudentFilter">
+                    <option value="">Все ученики</option>
+                    <!-- Опции будут добавлены динамически -->
+                </select>
+            </div>
+            <div id="totalPaymentAmount" class="total-amount">Итого: 0.00 ₽</div>
+            <table id="paymentsTable">
+                <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Ученик</th>
+                    <th>Сумма</th>
+                    <th>Описание</th>
+                    <th>Способ оплаты</th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Строки будут добавляться динамически -->
+                </tbody>
+            </table>
+        `;
+        document.body.insertBefore(paymentsSection, document.querySelector('script'));
+        
+        // Добавляем поиск в секцию учеников
+        const searchDiv = document.createElement('div');
+        searchDiv.className = 'search-container';
+        searchDiv.innerHTML = `
+            <label for="studentSearch">Поиск ученика:</label>
+            <input type="text" id="studentSearch" placeholder="Введите имя, фамилию или класс">
+        `;
+        const studentsSection = document.getElementById('studentsSection');
+        studentsSection.insertBefore(searchDiv, studentsSection.querySelector('h3'));
+        
+        // Добавляем столбец действий в таблицу учеников
+        const studentsTable = document.querySelector('#studentsTable thead tr');
+        const actionsTh = document.createElement('th');
+        actionsTh.textContent = 'Действия';
+        studentsTable.appendChild(actionsTh);
+        
+        // Добавляем столбец действий в таблицу расписания
+        const scheduleTable = document.querySelector('#scheduleTable thead tr');
+        const scheduleActionsTh = document.createElement('th');
+        scheduleActionsTh.textContent = 'Действия';
+        scheduleTable.appendChild(scheduleActionsTh);
+
+        setupTabs();
+        setupStudentForm();
+        setupScheduleForm();
+        setupCalendar();
+        setupPaymentForm();
+        setupStudentSearch();
+        setupPaymentFilter();
+        
+        // Загружаем данные из локального хранилища
+        loadFromLocalStorage();
+        
+        // Обновляем обработчик формы студентов для поддержки редактирования
+        const studentForm = document.getElementById('studentForm');
+        studentForm.onsubmit = function(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const studentClass = document.getElementById('class').value;
+            const description = document.getElementById('description').value;
+            
+            // Проверяем, редактируем или добавляем
+            const studentIdInput = document.getElementById('studentId');
+            
+            if (studentIdInput && studentIdInput.value) {
+                // Режим редактирования
+                const studentId = parseInt(studentIdInput.value);
+                const index = studentsData.findIndex(s => s.id === studentId);
+                
+                if (index !== -1) {
+                    // Обновляем данные ученика
+                    studentsData[index].firstName = firstName;
+                    studentsData[index].lastName = lastName;
+                    studentsData[index].class = studentClass;
+                    studentsData[index].description = description;
+                    
+                    // Обновляем имя ученика во всех связанных записях
+                    const fullName = `${firstName} ${lastName}`;
+                    schedulesData.forEach(lesson => {
+                        if (parseInt(lesson.studentId) === studentId) {
+                            lesson.studentName = fullName;
+                        }
+                    });
+                    
+                    paymentsData.forEach(payment => {
+                        if (parseInt(payment.studentId) === studentId) {
+                            payment.studentName = fullName;
+                        }
+                    });
+                    
+                    // Обновляем календарь
+                    Object.keys(calendarEvents).forEach(dateKey => {
+                        calendarEvents[dateKey].forEach(event => {
+                            if (parseInt(event.studentId) === studentId) {
+                                event.studentName = fullName;
+                            }
+                        });
+                    });
+                    
+                    // Сбрасываем режим редактирования
+                    studentIdInput.value = '';
+                    document.querySelector('#studentForm button[type="submit"]').textContent = 'Добавить ученика';
+                }
+            } else {
+                // Режим добавления
+                const student = {
+                    id: Date.now(),
+                    firstName,
+                    lastName,
+                    class: studentClass,
+                    description
+                };
+                studentsData.push(student);
+            }
+            
+            // Обновляем интерфейс
+            updateStudentTable();
+            updateScheduleTable();
+            updatePaymentTable();
+            updateStudentSelects();
+            renderCalendar(currentCalendarDate);
+            
+            // Сохраняем в локальное хранилище
+            saveToLocalStorage();
+            
+            // Очищаем форму
+            studentForm.reset();
+        };
+        
+        // Обновляем обработчик формы занятий для поддержки редактирования
+        const scheduleForm = document.getElementById('scheduleForm');
+        scheduleForm.onsubmit = function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('lessonTitle').value;
+            const dateTime = document.getElementById('lessonDateTime').value;
+            const studentId = document.getElementById('studentSelect').value;
+            const notes = document.getElementById('lessonNotes').value;
+            
+            // Находим выбранного ученика
+            const student = studentsData.find(s => s.id.toString() === studentId);
+            const studentName = student ? `${student.firstName} ${student.lastName}` : 'Ученик не выбран';
+            
+            // Проверяем, редактируем или добавляем
+            const lessonIdInput = document.getElementById('lessonId');
+            
+            if (lessonIdInput && lessonIdInput.value) {
+                // Режим редактирования
+                const lessonId = parseInt(lessonIdInput.value);
+                const index = schedulesData.findIndex(l => l.id === lessonId);
+                
+                if (index !== -1) {
+                    // Сначала удаляем старое событие из календаря
+                    const oldLesson = schedulesData[index];
+                    const oldDateObj = new Date(oldLesson.dateTime);
+                    const oldDateKey = formatDateKey(oldDateObj);
+                    
+                    if (calendarEvents[oldDateKey]) {
+                        const eventIndex = calendarEvents[oldDateKey].findIndex(e => e.id === lessonId);
+                        if (eventIndex !== -1) {
+                            calendarEvents[oldDateKey].splice(eventIndex, 1);
+                            if (calendarEvents[oldDateKey].length === 0) {
+                                delete calendarEvents[oldDateKey];
+                            }
+                        }
+                    }
+                    
+                    // Обновляем данные занятия
+                    schedulesData[index] = {
+                        id: lessonId,
+                        title,
+                        dateTime,
+                        studentId,
+                        studentName,
+                        notes
+                    };
+                    
+                    // Добавляем обновленное событие в календарь
+                    addEventToCalendar(schedulesData[index]);
+                    
+                    // Сбрасываем режим редактирования
+                    lessonIdInput.value = '';
+                    document.querySelector('#scheduleForm button[type="submit"]').textContent = 'Добавить занятие';
+                }
+            } else {
+                // Режим добавления
+                const lesson = {
+                    id: Date.now(),
+                    title,
+                    dateTime,
+                    studentId,
+                    studentName,
+                    notes
+                };
+                schedulesData.push(lesson);
+                
+                // Добавляем в календарь
+                addEventToCalendar(lesson);
+            }
+            
+            // Обновляем интерфейс
+            updateScheduleTable();
+            renderCalendar(currentCalendarDate);
+            
+            // Сохраняем в локальное хранилище
+            saveToLocalStorage();
+            
+            // Очищаем форму
+            scheduleForm.reset();
+        };
+    });
+</script>
+
+</body>
+</html>
